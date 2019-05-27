@@ -1,6 +1,7 @@
 package com.android.mycab;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,6 +16,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class CustomerLoginRegister_activity extends AppCompatActivity {
     private TextView CreateCustomerAccount;
@@ -25,6 +29,10 @@ public class CustomerLoginRegister_activity extends AppCompatActivity {
     private EditText CustomerPassword;
     private FirebaseAuth mAuth;
     private ProgressDialog loadingBar;
+    private DatabaseReference customersDatabaseRef;
+    private FirebaseAuth.AuthStateListener firebaseAuthListner;
+    private FirebaseUser currentUser;
+    private String onlinecustomerid;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,8 +96,11 @@ public class CustomerLoginRegister_activity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
+                                Intent customerintent = new Intent(CustomerLoginRegister_activity.this, CustomerMapActivity.class);
+                                startActivity(customerintent);
                                 Toast.makeText(CustomerLoginRegister_activity.this, "Driver Login Successfully...", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
+
                             } else {
                                 Toast.makeText(CustomerLoginRegister_activity.this, "Driver Login UnSuccessfull....", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
@@ -116,7 +127,13 @@ public class CustomerLoginRegister_activity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if(task.isSuccessful()){
-                                Toast.makeText(CustomerLoginRegister_activity.this, "Driver Register Successfully...", Toast.LENGTH_SHORT).show();
+                                onlinecustomerid = mAuth.getCurrentUser().getUid();
+                                customersDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(onlinecustomerid);
+                                customersDatabaseRef.setValue(true);
+
+                                Intent intent = new Intent(CustomerLoginRegister_activity.this, CustomerMapActivity.class);
+                                startActivity(intent);
+
                                 loadingBar.dismiss();
                             }
 

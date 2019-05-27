@@ -16,6 +16,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class DriverLoginRegisterActivity extends AppCompatActivity {
     private TextView CreateDriverAccount;
@@ -26,13 +29,15 @@ public class DriverLoginRegisterActivity extends AppCompatActivity {
     private EditText DriverPassword;
     private FirebaseAuth mAuth;
     private ProgressDialog loadingBar;
-
+    private DatabaseReference DriverDatabaseRef;
+    private FirebaseAuth.AuthStateListener firebaseAuthListner;
+    private FirebaseUser currentUser;
+    private String onlineDriverid;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_login_register);
         mAuth = FirebaseAuth.getInstance();
-
         CreateDriverAccount = (TextView) findViewById(R.id.create_driver_account);
         TitleDriver = (TextView) findViewById(R.id.titlr_driver);
         LoginDriverButton = (Button) findViewById(R.id.login_driver_btn);
@@ -89,9 +94,10 @@ public class DriverLoginRegisterActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(DriverLoginRegisterActivity.this, "Driver Login Successfully...", Toast.LENGTH_SHORT).show();
-                                Intent driverintent = new Intent(DriverLoginRegisterActivity.this, DriverMapsActivity.class);
+
+                                Intent driverintent = new Intent(DriverLoginRegisterActivity.this, DriverMapActivity.class);
                                 startActivity(driverintent);
+                                Toast.makeText(DriverLoginRegisterActivity.this, "Driver Login Successfully...", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
 
                             } else {
@@ -103,8 +109,7 @@ public class DriverLoginRegisterActivity extends AppCompatActivity {
                     });
         }
     }
-    private
-    void RegisterDriver(String email, String password) {
+    private void RegisterDriver(String email, String password) {
         if (TextUtils.isEmpty(email)) {
             Toast.makeText(DriverLoginRegisterActivity.this, "Please write your Email...", Toast.LENGTH_SHORT).show();
         }
@@ -115,22 +120,23 @@ public class DriverLoginRegisterActivity extends AppCompatActivity {
             loadingBar.setTitle("Please wait :");
             loadingBar.setMessage("Please wait we are registering  your data...");
             loadingBar.show();
-
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(DriverLoginRegisterActivity.this, "Driver Register Successfully...", Toast.LENGTH_SHORT).show();
-                                loadingBar.dismiss();
-                                Intent intent = new Intent(DriverLoginRegisterActivity.this, DriverMapsActivity.class);
+                                onlineDriverid = mAuth.getCurrentUser().getUid();
+                                DriverDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(onlineDriverid);
+                                DriverDatabaseRef.setValue(true);
+
+                                Intent intent = new Intent(DriverLoginRegisterActivity.this, DriverMapActivity.class);
                                 startActivity(intent);
+
+                                loadingBar.dismiss();
 
                             } else {
                                 Toast.makeText(DriverLoginRegisterActivity.this, "Driver Register UnSuccessfull....", Toast.LENGTH_SHORT).show();
-                                loadingBar.dismiss();
-                            }
-
+                                loadingBar.dismiss(); }
                         }
                     });
         }
