@@ -4,13 +4,15 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -35,9 +37,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class CustomerMapActivity extends FragmentActivity
         implements OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks,
@@ -64,6 +69,10 @@ public class CustomerMapActivity extends FragmentActivity
     private ValueEventListener DriverLocationRefListner;
     private Boolean driverFound = false, requestType = false;
     private String driverFoundID;
+    private TextView txtName, txtPhone, txtCarName;
+    private CircleImageView profilePic;
+    private RelativeLayout relativeLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,8 +85,21 @@ public class CustomerMapActivity extends FragmentActivity
         DriversAvailableRef = FirebaseDatabase.getInstance().getReference().child("Drivers Available");
         DriverLocationRef= FirebaseDatabase.getInstance().getReference().child("DriversWorking");
         logoutbuttonCustomer = (Button) findViewById(R.id.logout_customer_btn);
-        SettingCustomer = (Button) findViewById(R.id.settings_customer_btn);
         CallCabCarButton = (Button) findViewById(R.id.call_a_car_button);
+        txtName = findViewById(R.id.name_driver);
+        txtPhone = findViewById(R.id.phone_driver);
+        txtCarName = findViewById(R.id.car_name_driver);
+        profilePic = findViewById(R.id.profile_image_driver);
+        relativeLayout = findViewById(R.id.rel1);
+        SettingCustomer = (Button) findViewById(R.id.settings_customer_btn);
+        SettingCustomer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CustomerMapActivity.this, SettingActivity.class);
+                intent.putExtra("type", "Customers");
+                startActivity(intent);
+            }
+        });
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -129,7 +151,7 @@ public class CustomerMapActivity extends FragmentActivity
                     }
 
                     CallCabCarButton.setText("Call a Cab");
-
+                    relativeLayout.setVisibility(View.GONE);
                 }
                 else
                 {
@@ -169,6 +191,7 @@ public class CustomerMapActivity extends FragmentActivity
                           HashMap drivermap = new HashMap();
                           drivermap.put("CustomerRideId",customerID);
                           DriverRef.updateChildren(drivermap);
+                    //Show driver location on customerMapActivity
                           GettingDriverLocation();
                           CallCabCarButton.setText("Looking for  driver location");
                 }
@@ -200,7 +223,7 @@ public class CustomerMapActivity extends FragmentActivity
         });
 
 
-    }
+    }  //and then we get to the driver location - to tell customer where is the driver
 
       private void GettingDriverLocation() {
       DriverLocationRef.child(driverFoundID).child("l")
@@ -212,6 +235,9 @@ public class CustomerMapActivity extends FragmentActivity
             double LocationLat = 0;
             double LocationLng = 0;
             CallCabCarButton.setText("Driver Found");
+              relativeLayout.setVisibility(View.VISIBLE);
+              getAssignedDriverInformation();
+
             if(driverlocationMap.get(0)!=null) {
                 LocationLat = Double.parseDouble(driverlocationMap.get(0).toString());
             }
@@ -321,5 +347,48 @@ public class CustomerMapActivity extends FragmentActivity
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
+    }
+    public void LogOutUser()
+    {
+        Intent startPageIntent = new Intent(CustomerMapActivity.this, WelcomeActivity.class);
+        startPageIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(startPageIntent);
+        finish();
+    }
+
+
+
+    private void getAssignedDriverInformation()
+    {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child("Drivers").child(driverFoundID);
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                {
+                    String name = dataSnapshot.child("name").getValue().toString();
+                    String phone = dataSnapshot.child("phone").getValue().toString();
+                    String car = dataSnapshot.child("car").getValue().toString();
+
+                    txtName.setText(name);
+                    txtPhone.setText(phone);
+                    txtCarName.setText(car);
+
+                    if (dataSnapshot.hasChild("image"))
+                    {
+                        String image = dataSnapshot.child("image").getValue().toString();
+                        Picasso.get().load(image).into(profilePic);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 }

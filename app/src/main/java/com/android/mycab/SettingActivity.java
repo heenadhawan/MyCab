@@ -3,8 +3,8 @@ package com.android.mycab;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -12,7 +12,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -39,23 +38,18 @@ public class SettingActivity extends AppCompatActivity {
     private EditText nameEditText, phoneEditText, driverCarName;
     private ImageView closeButton, saveButton;
     private TextView profileChangeBtn;
-
     private DatabaseReference databaseReference;
     private FirebaseAuth mAuth;
     private StorageTask uploadTask;
     private StorageReference storageProfilePicsRef;
-
-
     private String checker = "";
     private Uri imageUri;
     private String myUrl = "";
 
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_setting);
         getType = getIntent().getStringExtra("type");
         Toast.makeText(this, getType, Toast.LENGTH_SHORT).show();
@@ -64,8 +58,6 @@ public class SettingActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference().child("Users").child(getType);
         storageProfilePicsRef = FirebaseStorage.getInstance().getReference().child("Profile Pictures");
-
-
 
         profileImageView = findViewById(R.id.profile_image);
 
@@ -82,8 +74,6 @@ public class SettingActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.save_button);
 
         profileChangeBtn = findViewById(R.id.change_picture_btn);
-
-
 
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,7 +119,6 @@ public class SettingActivity extends AppCompatActivity {
 
         getUserInformation();
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)

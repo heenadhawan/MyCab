@@ -4,13 +4,15 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -32,8 +34,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class DriverMapActivity extends FragmentActivity
         implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
@@ -55,6 +60,9 @@ public class DriverMapActivity extends FragmentActivity
     private DatabaseReference AssignedCustomerPickUpRef;
     Marker PickUpMarker;
     private ValueEventListener AssignedCustomerPickUpRefListener;
+    private RelativeLayout relativeLayout;
+    private TextView txtName, txtPhone;
+    private CircleImageView profilePic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +72,25 @@ public class DriverMapActivity extends FragmentActivity
         driverID = mauth.getCurrentUser().getUid();
         Currentuser = mauth.getCurrentUser();
         logoutbuttonDriver = (Button)findViewById(R.id.logout_driv_btn);
+        txtName = findViewById(R.id.name_customer);
+        txtPhone = findViewById(R.id.phone_customer);
+        profilePic = findViewById(R.id.profile_image_customer);
+        relativeLayout = findViewById(R.id.rel2);
         SeetingDriver = (Button)findViewById(R.id.settings_driver_btn);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        SeetingDriver.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)
+            {
+                Intent intent = new Intent(DriverMapActivity.this, SettingActivity.class);
+                intent.putExtra("type", "Drivers");
+                startActivity(intent);
+            }
+        });
+
         logoutbuttonDriver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,25 +104,39 @@ public class DriverMapActivity extends FragmentActivity
         getAssignedCustomersRequest();
     }
 
-    private void getAssignedCustomersRequest() {
+    private void getAssignedCustomersRequest()
+    {
         AssignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child("Drivers").child(driverID).child("CustomerRideId");
-       AssignedCustomerPickUpRefListener= AssignedCustomerRef.addValueEventListener(new ValueEventListener() {
+                .child("Drivers").child(driverID).child("CustomerRideID");
+
+        AssignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if(dataSnapshot.exists())
+                {
                     customerID = dataSnapshot.getValue().toString();
                     //getting assigned customer location
                     GetAssignedCustomerPickupLocation();
-                } else {
+
+                    relativeLayout.setVisibility(View.VISIBLE);
+                    getAssignedCustomerInformation();
+                }
+                else
+                {
                     customerID = "";
 
-                    if (PickUpMarker != null) {
+                    if (PickUpMarker != null)
+                    {
                         PickUpMarker.remove();
                     }
-                    if (AssignedCustomerPickUpRefListener != null) {
+
+                    if (AssignedCustomerPickUpRef != null)
+                    {
                         AssignedCustomerPickUpRef.removeEventListener(AssignedCustomerPickUpRefListener);
                     }
+
+                    relativeLayout.setVisibility(View.GONE);
                 }
             }
 
@@ -110,6 +146,11 @@ public class DriverMapActivity extends FragmentActivity
             }
         });
     }
+
+
+
+
+
 
     private void GetAssignedCustomerPickupLocation() {
         AssignedCustomerPickUpRef = FirebaseDatabase.getInstance().getReference().child("Customer Requests")
@@ -145,13 +186,7 @@ public class DriverMapActivity extends FragmentActivity
 
         });
     }
-            private void LogoutDriver() {
 
-                Intent welcomeintent = new Intent(DriverMapActivity.this, WelcomeActivity.class);
-                welcomeintent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(welcomeintent);
-                finish();
-            }
 
 
     @Override
@@ -202,6 +237,8 @@ public class DriverMapActivity extends FragmentActivity
             mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
 
+
+
             String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
             DatabaseReference DriversAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Drivers Available");
@@ -223,7 +260,6 @@ public class DriverMapActivity extends FragmentActivity
                     break;
             }
         }
-
     }
 
     protected synchronized void buildgoogleapiclient()
@@ -252,4 +288,42 @@ public class DriverMapActivity extends FragmentActivity
         geoFire.removeLocation(userID);
     }
 
+    private void LogoutDriver() {
+
+        Intent welcomeintent = new Intent(DriverMapActivity.this, WelcomeActivity.class);
+        welcomeintent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(welcomeintent);
+        finish();
+    }
+    private void getAssignedCustomerInformation()
+    {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child("Customers").child(customerID);
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                {
+                    String name = dataSnapshot.child("name").getValue().toString();
+                    String phone = dataSnapshot.child("phone").getValue().toString();
+
+                    txtName.setText(name);
+                    txtPhone.setText(phone);
+
+                    if (dataSnapshot.hasChild("image"))
+                    {
+                        String image = dataSnapshot.child("image").getValue().toString();
+                        Picasso.get().load(image).into(profilePic);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 }

@@ -2,8 +2,8 @@ package com.android.mycab;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -98,13 +98,14 @@ public class CustomerLoginRegister_activity extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 Intent customerintent = new Intent(CustomerLoginRegister_activity.this, CustomerMapActivity.class);
                                 startActivity(customerintent);
-                                Toast.makeText(CustomerLoginRegister_activity.this, "Driver Login Successfully...", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CustomerLoginRegister_activity.this, "Customer Login Successfully...", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
 
                             } else {
-                                Toast.makeText(CustomerLoginRegister_activity.this, "Driver Login UnSuccessfull....", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CustomerLoginRegister_activity.this, "Customer Login UnSuccessfull....", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
                             }
+
 
                         }
                     });
